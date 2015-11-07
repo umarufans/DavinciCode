@@ -3673,7 +3673,7 @@ var egret;
     /**
      * @language en_US
      * The URLRequestMethod class provides values that specify whether the
-     * URLRequest object should use the POST method or the GET method when sending data to a server.
+     * URLRequest object should use the POST method or the GET method when sending data to a server.py.
      * @see http://docs.egret-labs.org/post/manual/net/postget.html POST与GET
      * @version Egret 2.4
      * @platform Web,Native
@@ -3755,7 +3755,7 @@ var egret;
 (function (egret) {
     /**
      * @language en_US
-     * The URLVariables class allows you to transfer variables between an application and a server.
+     * The URLVariables class allows you to transfer variables between an application and a server.py.
      * Use URLVariables objects with methods of the URLLoader class and the data property of the URLRequest class.
      * @see http://docs.egret-labs.org/post/manual/net/senddata.html Send the request with parameters
      * @version Egret 2.4

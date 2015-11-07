@@ -6488,7 +6488,7 @@ declare module egret {
         private _status;
         /**
          * @language en_US
-         * he server returns the HTTP status code.
+         * he server.py returns the HTTP status code.
          * @version Egret 2.4
          * @platform Web,Native
          */
@@ -6503,7 +6503,7 @@ declare module egret {
          * @language en_US
          * EventDispatcher object using the specified event object thrown Event. The objects will be thrown in the object cache pool for the next round robin.
          * @param target {egret.IEventDispatcher} Distribute event target
-         * @param status {number} The server returns the HTTP status code
+         * @param status {number} The server.py returns the HTTP status code
          * @version Egret 2.4
          * @platform Web,Native
          */
@@ -9446,7 +9446,7 @@ declare module egret {
     /**
      * @language en_US
      * The HttpMethod class provides values that specify whether the HttpRequest object should use the POST method
-     * or the GET method when sending data to a server.
+     * or the GET method when sending data to a server.py.
      * @see egret.HttpRequest
      * @version Egret 2.4
      * @platform Web,Native
