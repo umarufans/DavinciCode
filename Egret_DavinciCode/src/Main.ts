@@ -27,6 +27,7 @@
 //
 //////////////////////////////////////////////////////////////////////////////////////
 
+import Logger = egret.Logger;
 class Main extends egret.DisplayObjectContainer {
 
     /**
@@ -35,6 +36,8 @@ class Main extends egret.DisplayObjectContainer {
      */
     private socket:egret.WebSocket;
     private message:string = "hello world";
+    private cardList:Array<Card>;
+    private localPlayer:LocalPlayer;
     public constructor() {
         super();
         this.addEventListener(egret.Event.ADDED_TO_STAGE, this.onAddToStage, this);
@@ -44,22 +47,37 @@ class Main extends egret.DisplayObjectContainer {
         this.removeEventListener(egret.Event.ADDED_TO_STAGE, this.onAddToStage, this);
        //RES.addEventListener(RES.ResourceEvent.CONFIG_COMPLETE, this.onConfigComplete, this);
     }
+    private createGameScene() {
+        var background:egret.Shape = new egret.Shape;
+        background.graphics.beginFill(0x123456);
+        background.graphics.drawRect(0, 0, this.stage.stageWidth, this.stage.stageHeight);
+        background.graphics.endFill();
+        this.addChild(background);
+    }
     private init() {
+        this.createGameScene();
+    //    this.draw();
+        this.cardList = new Array<Card>();
+        this.localPlayer = new LocalPlayer("Lawrence");
         this.socket = new egret.WebSocket();
         this.socket.addEventListener(egret.ProgressEvent.SOCKET_DATA, this.onReceiveMessage, this);
         this.socket.addEventListener(egret.Event.CONNECT, this.onSocketOpen, this);
-        this.socket.connect("192.168.1.108", 8888);
+        this.socket.connectByUrl("ws://192.168.1.108:8888/" + this.localPlayer.userName);
     }
     private onReceiveMessage() {
         var message = this.socket.readUTF();
         var json = JSON.parse(message);
         console.log(json);
+        for(var i = 0; i < 3; i++) {
+            var card = new Card(json[i][0], json[i][1]);
+            card.x = 150 * i;
+            this.addChild(card);
+            this.cardList.push(card);
+        }
     }
     private onSocketOpen() {
+        this.socket.writeUTF(this.localPlayer.userName);
         console.log("Server Connected");
-    }
-    private draw() {
-
     }
 }
 

@@ -26,6 +26,7 @@
 //  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 //////////////////////////////////////////////////////////////////////////////////////
+var Logger = egret.Logger;
 var Main = (function (_super) {
     __extends(Main, _super);
     function Main() {
@@ -39,21 +40,37 @@ var Main = (function (_super) {
         this.removeEventListener(egret.Event.ADDED_TO_STAGE, this.onAddToStage, this);
         //RES.addEventListener(RES.ResourceEvent.CONFIG_COMPLETE, this.onConfigComplete, this);
     };
+    p.createGameScene = function () {
+        var background = new egret.Shape;
+        background.graphics.beginFill(0x123456);
+        background.graphics.drawRect(0, 0, this.stage.stageWidth, this.stage.stageHeight);
+        background.graphics.endFill();
+        this.addChild(background);
+    };
     p.init = function () {
+        this.createGameScene();
+        //    this.draw();
+        this.cardList = new Array();
+        this.localPlayer = new LocalPlayer("Lawrence");
         this.socket = new egret.WebSocket();
         this.socket.addEventListener(egret.ProgressEvent.SOCKET_DATA, this.onReceiveMessage, this);
         this.socket.addEventListener(egret.Event.CONNECT, this.onSocketOpen, this);
-        this.socket.connect("192.168.1.108", 8888);
+        this.socket.connectByUrl("ws://192.168.1.108:8888/" + this.localPlayer.userName);
     };
     p.onReceiveMessage = function () {
         var message = this.socket.readUTF();
         var json = JSON.parse(message);
         console.log(json);
+        for (var i = 0; i < 3; i++) {
+            var card = new Card(json[i][0], json[i][1]);
+            card.x = 150 * i;
+            this.addChild(card);
+            this.cardList.push(card);
+        }
     };
     p.onSocketOpen = function () {
+        this.socket.writeUTF(this.localPlayer.userName);
         console.log("Server Connected");
-    };
-    p.draw = function () {
     };
     return Main;
 })(egret.DisplayObjectContainer);
