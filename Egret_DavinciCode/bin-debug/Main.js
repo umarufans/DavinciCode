@@ -43,11 +43,12 @@ var Main = (function (_super) {
         this.socket = new egret.WebSocket();
         this.socket.addEventListener(egret.ProgressEvent.SOCKET_DATA, this.onReceiveMessage, this);
         this.socket.addEventListener(egret.Event.CONNECT, this.onSocketOpen, this);
-        this.socket.connect("101.200.74.7", 60000);
+        this.socket.connect("192.168.1.108", 8888);
     };
     p.onReceiveMessage = function () {
         var message = this.socket.readUTF();
-        console.log(message);
+        var json = JSON.parse(message);
+        console.log(json);
     };
     p.onSocketOpen = function () {
         console.log("Server Connected");
