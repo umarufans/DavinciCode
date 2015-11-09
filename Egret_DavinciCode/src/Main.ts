@@ -28,6 +28,10 @@
 //////////////////////////////////////////////////////////////////////////////////////
 
 import Logger = egret.Logger;
+import Player = egret.sys.Player;
+import TextField = egret.TextField;
+import HorizontalAlign = egret.HorizontalAlign;
+import VerticalAlign = egret.VerticalAlign;
 class Main extends egret.DisplayObjectContainer {
 
     /**
@@ -37,7 +41,12 @@ class Main extends egret.DisplayObjectContainer {
     private socket:egret.WebSocket;
     private message:string = "hello world";
     private cardList:Array<Card>;
+    private othersCardLists:Array<OtherPlayer>;
+    private playerList:Array<string>;
     private localPlayer:LocalPlayer;
+    private connectStatus:number;
+    private textField:egret.TextField;
+    private _operatorName:string;
     public constructor() {
         super();
         this.addEventListener(egret.Event.ADDED_TO_STAGE, this.onAddToStage, this);
@@ -55,30 +64,197 @@ class Main extends egret.DisplayObjectContainer {
         this.addChild(background);
     }
     private init() {
+        this.playerList = new Array<string>();
+        this.othersCardLists = new Array<OtherPlayer>();
+        this.localPlayer = new LocalPlayer();
+        this.localPlayer.userName = '';
         this.createGameScene();
-    //    this.draw();
-        this.cardList = new Array<Card>();
-        this.localPlayer = new LocalPlayer("Lawrence");
-        this.socket = new egret.WebSocket();
-        this.socket.addEventListener(egret.ProgressEvent.SOCKET_DATA, this.onReceiveMessage, this);
-        this.socket.addEventListener(egret.Event.CONNECT, this.onSocketOpen, this);
-        this.socket.connectByUrl("ws://192.168.1.108:8888/" + this.localPlayer.userName);
+        this.draw();
+        //this.addChild(new Card(1, 1));
     }
     private onReceiveMessage() {
         var message = this.socket.readUTF();
+        console.log(message);
         var json = JSON.parse(message);
-        console.log(json);
-        for(var i = 0; i < 3; i++) {
-            var card = new Card(json[i][0], json[i][1]);
-            card.x = 150 * i;
-            this.addChild(card);
-            this.cardList.push(card);
+        if(this.connectStatus == 1) {
+            this.removeChild(this.textField);
+            for(var i = 0; i < json.length; i++) {
+                this.playerList.push(json[i]);
+            }
+            for(var i = 0; i < this.playerList.length; i++) {
+                //console.log(this.playerList[i]);
+            }
+            this.connectStatus = 0;
+        } else {
+            //alert("Length:" + this.playerList.length);
+            var localName:string = this.localPlayer.userName;
+            var statusCode:number = json['msg'];
+            console.log("status code: " + statusCode);
+            var cardList:Array<Card>;
+            if(statusCode == 0) {
+                for (var i = 0; i < this.playerList.length; i++) {
+                    var name = this.playerList[i];
+                    if (name == localName) {
+                        cardList = new Array<Card>();
+                        var local = json[name];
+                        for (var j = 0; j < local.length; j++) {
+                            cardList.push(new Card(local[j][0], local[j][1], 1));
+                            this.localPlayer.cardList = cardList;
+                            this.localPlayer.generateCardList(null);
+                            this.localPlayer.y = this.stage.stageHeight - 170;
+                            this.addChild(this.localPlayer);
+                        }
+                    } else {
+                        cardList = new Array<Card>();
+                        var remote = json[name];
+                        for (var j = 0; j < remote.length; j++) {
+                            cardList.push(new Card(remote[j][0], remote[j][1], 0));
+                        }
+                        this.othersCardLists.push(new OtherPlayer(name, cardList));
+                        for (var j = 0; j < this.othersCardLists.length; j++) {
+                            this.othersCardLists[j].generateCardList();
+                            this.othersCardLists[j].y = 170 * j;
+                            this.addChild(this.othersCardLists[j]);
+                        }
+                    }
+                }
+            }
+            if(statusCode == 1) {
+                this._operatorName = json['name'];
+                console.log(this._operatorName);
+                if(localName == this._operatorName) {
+                    //this.socket.writeUTF('["' + name + '", ' + 1 + ']');
+                    this.generateSelector();
+                }
+            }
+            if(statusCode == 3) {
+                console.log("Operator Name: " + this._operatorName);
+                var info = json['info'];
+                //alert("It Works!");
+                if(this.localPlayer.userName == this._operatorName) {
+                    var card = new Card(info[0], info[1], 1);
+                    this.localPlayer.generateCardList(card);
+                    console.log("Added!");
+                } else {
+                    for(var k = 0; k < this.othersCardLists.length; k++) {
+                        if(this.othersCardLists[k].userName == this._operatorName) {
+                            console.log("Added!");
+                            this.othersCardLists[k].addCard(new Card(info[0], info[1], 0));
+                        }
+                    }
+                }
+            }
+            //for(var i = 0; i < this.playerList.length; i++) {
+            //    var name = this.playerList[i];
+            //    console.log(i + " " + this.playerList.length);
+            //    if(name == localName) {
+            //        var local = json[name];
+            //        if(local.length == 1) {
+            //            this.localPlayer.generateCardList(new Card(local[0][0], local[0][1], 1));
+            //        } else {
+            //            for(var j = 0; j < local.length; j++) {
+            //                this.localPlayer.cardList.push(new Card(local[j][0], local[j][1], 1));
+            //            }
+            //            this.localPlayer.generateCardList(null);
+            //            this.localPlayer.y = this.stage.stageHeight - 170;
+            //            this.addChild(this.localPlayer);
+            //        }
+            //    } else {
+            //        var cardList:Array<Card>;
+            //        var remote = json[name];
+            //        if(remote.length == 1) {
+            //            for(var j = 0; j < this.othersCardLists.length; j++) {
+            //                if(this.othersCardLists[i].userName == name) {
+            //                    cardList = this.othersCardLists[i].cardList;
+            //                    cardList.push(new Card(remote[0][0], remote[0][1], 0));
+            //                }
+            //            }
+            //        } else {
+            //            cardList = new Array<Card>();
+            //            for(var j = 0; j < remote.length; j++) {
+            //                cardList.push(new Card(remote[j][0], remote[j][1], 0));
+            //            }
+            //            var otherPlayer:OtherPlayer = new OtherPlayer(name, cardList);
+            //            otherPlayer.generateCardList();
+            //            otherPlayer.y = yPosition * 170;
+            //            console.log("length: " + yPosition);
+            //            yPosition++;
+            //            this.addChild(otherPlayer);
+            //            this.othersCardLists.push(otherPlayer);
+            //        }
+            //        console.log(this.playerList.length + "");
+            //    }
+            //}
         }
+        //console.log(json);
     }
     private onSocketOpen() {
-        this.socket.writeUTF(this.localPlayer.userName);
+        //this.socket.writeUTF(this.localPlayer.userName);
         console.log("Server Connected");
     }
+    private draw() {
+        this.textField = new TextField();
+        this.textField.width = 200;
+        this.textField.height = 100;
+        this.textField.x = (this.stage.stageWidth - this.textField.width) / 2;
+        this.textField.y = (this.stage.stageHeight - this.textField.height) / 2;
+        this.textField.background = true;
+        this.textField.backgroundColor = 0xffffff;
+        this.textField.textColor = 0x000000;
+        this.textField.textAlign = HorizontalAlign.CENTER;
+        this.textField.textAlign = VerticalAlign.MIDDLE;
+        this.textField.type = egret.TextFieldType.INPUT;
+        this.textField.addEventListener(egret.Event.FOCUS_OUT, this.setConnection, this);
+        this.addChild(this.textField);
+    }
+    private setConnection() {
+        this.localPlayer.userName = this.textField.text;
+        console.log(this.textField.text);
+        this.textField.backgroundColor = 0x123456;
+        this.textField.type = egret.TextFieldType.DYNAMIC;
+        this.textField.textColor = 0xffffff;
+        this.textField.text = "Waiting for other players..";
+        //this.removeChild(this.textField);
+        this.establishConnection();
+    }
+    private establishConnection() {
+        this.connectStatus = 1;
+        this.socket = new egret.WebSocket();
+        this.socket.addEventListener(egret.ProgressEvent.SOCKET_DATA, this.onReceiveMessage, this);
+        this.socket.addEventListener(egret.Event.CONNECT, this.onSocketOpen, this);
+        this.socket.connectByUrl("ws://127.0.0.1:8888/" + this.localPlayer.userName);
+    }
+    private selector:egret.Sprite;
+    private generateSelector() {
+        console.log("Generate Selector.");
+        this.selector = new egret.Sprite();
+        this.selector.graphics.beginFill(0x000000);
+        this.selector.graphics.drawRect(0, 0, 200, 60);
+        this.selector.graphics.endFill();
+        var black = new ColorButton(0);
+        var white = new ColorButton(1);
+        white.x = 100;
+        black.addEventListener(egret.TouchEvent.TOUCH_TAP, this.chooseBlack, this);
+        white.addEventListener(egret.TouchEvent.TOUCH_TAP, this.chooseWhite, this);
+        this.selector.addChild(white);
+        this.selector.addChild(black);
+        this.selector.x = this.stage.stageWidth - 300;
+        this.selector.y = this.stage.stageHeight - 200;
+        this.selector.touchEnabled = true;
+        this.addChild(this.selector);
+    }
+    private chooseBlack() {
+        var jsonLine = '["' + this.localPlayer.userName + '", ' + 1 + ', ' + 0 + ']';
+        console.log(jsonLine);
+        this.socket.writeUTF(jsonLine);
+        this.removeChild(this.selector);
+    }
+    private chooseWhite() {
+        var jsonLine = '["' + this.localPlayer.userName + '", ' + 1 + ',' + 1 + ']'
+        this.socket.writeUTF(jsonLine);
+        this.removeChild(this.selector);
+    }
+
 }
 
 

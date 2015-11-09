@@ -4,7 +4,6 @@ import tornado.web
 import tornado.websocket
 import tornado.httpserver
 import json
-import MySQLdb
 import sys
 import os
 import random
