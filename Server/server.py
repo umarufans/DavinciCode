@@ -103,6 +103,7 @@ class Join(tornado.websocket.WebSocketHandler):
 					temp_card = get_card(msg[2])
 			#		player.card.append(temp_card)
 					i ={'msg':3,'info':temp_card}
+					print i
 					for user in users:
 						users[user].write_message(json.dumps(i)) #将这张牌返回给客户端
 					break
@@ -155,7 +156,7 @@ class User:
 			while len(self.card)==x:
 				index = random.randint(0,length-1)
 				c = self.rest_card[index]
-				if c==24 or c==25:	
+				if c==24 or c==25:
 					if not gang:
 						gang=True
 					else:
